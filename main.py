@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
  
 # load the dataset, split into input (X) and output (y) variables
-dataset = np.loadtxt('pima-indians-diabetes.data.txt', delimiter=',')
+dataset = np.loadtxt('pima-indians-diabetes-data.txt', delimiter=',')
 X = dataset[:,0:8]
 y = dataset[:,8]
  
