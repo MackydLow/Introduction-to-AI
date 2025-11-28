@@ -9,6 +9,7 @@ import torch.distributions as dist
 import numpy as np
 
 import gymnasium as gym  
+from gymnasium import spaces
 
 
 
@@ -56,6 +57,7 @@ class villageEnviroment(gym.Env):
 
         self.price = price
 
+        self.action_space = spaces.Discrete(4)
         self.obsv = gym.spaces.Box(
             low = 0,
             high = 255,
@@ -73,18 +75,18 @@ class villageEnviroment(gym.Env):
 
         self.dropOff = deliveryLocation
 
-        return self.get_obs(), {}
+        return self.getObs(), {}
     
     def step(self, move):
         x, y = self.dronePos
 
         if move == 0 and x > 0:
             x -=1
-        elif move == 1 and x < self.H - 1:
+        elif move == 1 and x < self.rows - 1:
             x += 1
         elif move == 2 and y > 0:
             y -= 1
-        elif move == 3 and y < self.W - 1:
+        elif move == 3 and y < self.columns - 1:
             y += 1
 
         self.dronePos = [x, y]
@@ -96,15 +98,17 @@ class villageEnviroment(gym.Env):
             reward += 20
             terminated = True
 
-        return self.get_obs(), reward, terminated, False, {}
+        obs = self.getObs()
+
+        return obs, reward, terminated, False, {}
     
-    def get_obs(self):
+    def getObs(self):
         obs = np.copy(self.village)
         obs[self.dronePos[0], self.dronePos[1]] = 9
         return obs[:, :, None]
     
     def print(self):
-        print(self.get_obs()[:, :, 0])
+        print(self.getObs()[:, :, 0])
 
 
 def main():
@@ -122,7 +126,7 @@ def main():
         obs, reward, done, truncated, info = env.step(action)
 
     print("Action:", action, "Reward:", reward)
-    env.render()
+    env.print()
 
     if done:
         print("Taxi Reached")
