@@ -44,47 +44,47 @@ def houseDelivery():
         randomX = random.randint(0, 9)
         randomY = random.randint(0, 9)
 
-class villageEnviroment(gym.env):
+class villageEnviroment(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, village, price):
+    def __init__(self, village, price, deliveryLocation = None):
         super().__init__()
 
+        village = np.array(village)
         self.village = village
-        self.H, self.W = village.shape
+        self.rows, self.columns = village.shape
 
         self.price = price
 
-        self.observ = gym.spaces.Box(
+        self.obsv = gym.spaces.Box(
             low = 0,
             high = 255,
-            shape = (self.H, self.W, 1),
+            shape = (self.rows, self.columns, 1),
             dtype=np.uint8
         )
 
-        self.reset()
+        self.reset(deliveryLocation)
 
-    def reset(self, seed = None, options = None)
+    def reset(self, deliveryLocation ,seed = None, options = None):
         super().reset(seed=seed)
 
-        deliveryPickup = np.argwhere(self.village == 2)
+        deliveryPickup = np.argwhere(self.village == 5)
         self.dronePos = list(deliveryPickup[0])
 
-        houseDropOff = np.argwhere(self.village == 3)
-        self.dropOff = tuple(houseDropoff[0])
+        self.dropOff = deliveryLocation
 
-        return self.get_observation(), {}
+        return self.get_obs(), {}
     
-    def step(self, action):
+    def step(self, move):
         x, y = self.dronePos
 
-        if action == 0 and x > 0:
+        if move == 0 and x > 0:
             x -=1
-        elif action == 1 and x < self.H - 1:
+        elif move == 1 and x < self.H - 1:
             x += 1
-        elif action == 2 and y > 0:
+        elif move == 2 and y > 0:
             y -= 1
-        elif action == 3 and y < self.W - 1:
+        elif move == 3 and y < self.W - 1:
             y += 1
 
         self.dronePos = [x, y]
@@ -96,19 +96,36 @@ class villageEnviroment(gym.env):
             reward += 20
             terminated = True
 
-        return self.get_observation(), reward, terminated, False, {}
+        return self.get_obs(), reward, terminated, False, {}
     
-    def get_observation(self):
+    def get_obs(self):
         obs = np.copy(self.village)
         obs[self.dronePos[0], self.dronePos[1]] = 9
         return obs[:, :, None]
     
-    def render(self):
-        print(self.get_observation()[:, :, 0])
+    def print(self):
+        print(self.get_obs()[:, :, 0])
 
 
 def main():
     deliveryLocation = houseDelivery()
+
+    env = villageEnviroment(village, price =-1, deliveryLocation = deliveryLocation)
+
+    obs, info = env.reset()
+    print("start grid")
+    env.print()
+
+    done = False
+    while not done:
+        action = env.action_space.sample()
+        obs, reward, done, truncated, info = env.step(action)
+
+    print("Action:", action, "Reward:", reward)
+    env.render()
+
+    if done:
+        print("Taxi Reached")
 
 if __name__ == "__main__":
     main()
