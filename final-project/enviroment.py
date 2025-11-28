@@ -112,7 +112,7 @@ def main():
 
     env = villageEnviroment(village, price =-1, deliveryLocation = deliveryLocation)
 
-    obs, info = env.reset()
+    obs, info = env.reset(deliveryLocation)
     print("start grid")
     env.print()
 
