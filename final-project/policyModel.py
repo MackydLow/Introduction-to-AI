@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 
@@ -27,10 +28,10 @@ class PolicyModel(nn.Module):
         if i.dim() == 4 and i.shape[-1] == 1:
             i = i.permute(0, 3, 1, 2)
 
-        i = self.convol(x)
-        i = self.nnfc1(x)
-        i = self.dropout(x)
-        i = nnf.relu(x)
-        i = self.nnfc2(x)
+        i = self.convol(i)
+        i = self.nnfc1(i)
+        i = self.dropout(i)
+        i = nnf.relu(i)
+        i = self.nnfc2(i)
 
         return nnf.softmax(i, dim=-1)
