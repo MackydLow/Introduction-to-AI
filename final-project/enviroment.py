@@ -45,19 +45,35 @@ def houseDelivery():
         randomX = random.randint(0, 9)
         randomY = random.randint(0, 9)
 
+def createPriceArray(village):
+    price = village
+    for x in range(len(village)):
+        for y in range (len(village)):
+            if village[x][y] == 0 or village[x][y] == 1 or village[x][y] == 5:
+                price[x][y] = -1
+            elif village[x][y] == 2:
+                price[x][y] = -3
+            elif village[x][y] ==3 or village[x][y] == 4:
+                price[x][y] = -20
+
+    return price
+            
 class villageEnviroment(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, village, price, deliveryLocation = None):
+    def __init__(self, village, price, deliveryLocation: tuple):
         super().__init__()
 
         village = np.array(village)
+        price = np.array(price)
+
+        assert village.shape == price.shape
         self.village = village
+        self.price = price
         self.rows, self.columns = village.shape
 
-        self.price = price
+        self.actionSpace = gym.spaces.Discrete(4)
 
-        self.action_space = spaces.Discrete(4)
         self.obsv = gym.spaces.Box(
             low = 0,
             high = 255,
@@ -71,30 +87,38 @@ class villageEnviroment(gym.Env):
         super().reset(seed=seed)
 
         deliveryPickup = np.argwhere(self.village == 5)
-        self.dronePos = list(deliveryPickup[0])
+        
+        deliveryPickupRow, deliveryPickupCol = deliveryPickup
+        self.dronePos = int[(deliveryPickupRow), int(deliveryPickupCol)]
 
-        self.dropOff = deliveryLocation
+        deliveryDropOff = deliveryLocation
+
+        dropOffRow, dropOffCol = deliveryDropOff
+        self.dropOff = (int(dropOffRow), int(dropOffCol))
 
         return self.getObs(), {}
     
     def step(self, move):
         x, y = self.dronePos
+        nx, ny = x, y
 
         if move == 0 and x > 0:
-            x -=1
+            nx -=1
         elif move == 1 and x < self.rows - 1:
-            x += 1
+            nx += 1
         elif move == 2 and y > 0:
-            y -= 1
+            ny -= 1
         elif move == 3 and y < self.columns - 1:
-            y += 1
+            ny += 1
+        else :
+            nx, ny = x,y
 
         self.dronePos = [x, y]
 
-        reward = self.price
+        reward = float(self.price[nx, ny])
         terminated = False
 
-        if tuple(self.dronePos) == self.dropOff:
+        if [nx, ny] == self.dropOff:
             reward += 20
             terminated = True
 
@@ -113,8 +137,9 @@ class villageEnviroment(gym.Env):
 
 def main():
     deliveryLocation = houseDelivery()
+    price = createPriceArray(village)
 
-    env = villageEnviroment(village, price =-1, deliveryLocation = deliveryLocation)
+    env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
 
     obs, info = env.reset(deliveryLocation)
     print("start grid")
