@@ -7,9 +7,7 @@ import torch.nn.functional as nnf
 import torch.distributions as dist
 
 import numpy as np
-
 import gymnasium as gym  
-from gymnasium import spaces
 
 
 
@@ -46,15 +44,17 @@ def houseDelivery():
         randomY = random.randint(0, 9)
 
 def createPriceArray(village):
-    price = village
+    price = []
     for x in range(len(village)):
+        newPriceRow = []
         for y in range (len(village)):
             if village[x][y] == 0 or village[x][y] == 1 or village[x][y] == 5:
-                price[x][y] = -1
+                newPriceRow.append(-1)
             elif village[x][y] == 2:
-                price[x][y] = -3
+                newPriceRow.append(-3)
             elif village[x][y] ==3 or village[x][y] == 4:
-                price[x][y] = -20
+                newPriceRow.append(-20)
+        price.append(newPriceRow)
 
     return price
             
@@ -67,9 +67,8 @@ class villageEnviroment(gym.Env):
         village = np.array(village)
         price = np.array(price)
 
-        assert village.shape == price.shape
-        self.village = village
-        self.price = price
+        self.village = village.copy()
+        self.price = price.copy()
         self.rows, self.columns = village.shape
 
         self.actionSpace = gym.spaces.Discrete(4)
@@ -80,21 +79,15 @@ class villageEnviroment(gym.Env):
             shape = (self.rows, self.columns, 1),
             dtype=np.uint8
         )
+        
+        self.dropOff = deliveryLocation 
+        self.reset()
 
-        self.reset(deliveryLocation)
-
-    def reset(self, deliveryLocation ,seed = None, options = None):
+    def reset(self, seed = None, options = None):
         super().reset(seed=seed)
 
         deliveryPickup = np.argwhere(self.village == 5)
-        
-        deliveryPickupRow, deliveryPickupCol = deliveryPickup
-        self.dronePos = int[(deliveryPickupRow), int(deliveryPickupCol)]
-
-        deliveryDropOff = deliveryLocation
-
-        dropOffRow, dropOffCol = deliveryDropOff
-        self.dropOff = (int(dropOffRow), int(dropOffCol))
+        self.dronePos = list(deliveryPickup[0])
 
         return self.getObs(), {}
     
@@ -115,7 +108,7 @@ class villageEnviroment(gym.Env):
 
         self.dronePos = [x, y]
 
-        reward = float(self.price[nx, ny])
+        reward = float(self.price[nx][ny])
         terminated = False
 
         if [nx, ny] == self.dropOff:
@@ -141,13 +134,13 @@ def main():
 
     env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
 
-    obs, info = env.reset(deliveryLocation)
+    obs, info = env.reset(options = {"deliveryLocation": deliveryLocation})
     print("start grid")
     env.print()
 
     done = False
     while not done:
-        action = env.action_space.sample()
+        action = env.actionSpace.sample()
         obs, reward, done, truncated, info = env.step(action)
 
     print("Action:", action, "Reward:", reward)
