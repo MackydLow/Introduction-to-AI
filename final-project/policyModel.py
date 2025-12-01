@@ -17,9 +17,9 @@ class PolicyModel(nn.Module):
             nn.Flatten()
         )
 
-        self.nnfc1 = nn.lLinear(hiddenDim)
-        self.dropout = nn.DropOut(dropout)
-        self.nnfc2 = nn.linear(hiddenDim, outputDim)
+        self.nnfc1 = nn.LazyLinear(hiddenDim)
+        self.dropout = nn.Dropout(dropout)
+        self.nnfc2 = nn.LazyLinear(hiddenDim, outputDim)
 
     def forward(self, i):
         if i.dim() == 4 and i.shape[-1] == 1:
