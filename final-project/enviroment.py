@@ -32,7 +32,6 @@ def houseDelivery():
     while found == False:
         if village[randomX][randomY] == 3:
             found = True
-            deliveryLocation = village[randomX][randomY]
             return (randomX, randomY)
         randomX = random.randint(0, 9)
         randomY = random.randint(0, 9)
@@ -102,12 +101,12 @@ class villageEnviroment(gym.Env):
         else :
             nx, ny = x,y
 
-        self.dronePos = (x, y)
+        self.dronePos = (nx, ny)
 
         reward = float(self.price[nx][ny])
         terminated = False
 
-        if [nx, ny] == self.dropOff:
+        if (nx, ny) == self.dropOff:
             reward += 20
             terminated = True
 
