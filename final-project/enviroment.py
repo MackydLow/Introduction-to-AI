@@ -61,19 +61,20 @@ class villageEnviroment(gym.Env):
         village = np.array(village)
         price = np.array(price)
 
-        self.village = village.copy()
-        self.price = price.copy()
+        self.village = village
+        self.price = price
         self.rows, self.columns = village.shape
 
         self.actionSpace = gym.spaces.Discrete(4)
 
-        self.obsv = gym.spaces.Box(
+        self.observation_space = gym.spaces.Box(
             low = 0,
-            high = 255,
+            high = np.max(village),
             shape = (self.rows, self.columns, 1),
-            dtype=np.uint8
+            dtype=np.float32
         )
         
+        self.dronePos = None
         self.dropOff = deliveryLocation 
         self.reset()
 
@@ -122,26 +123,26 @@ class villageEnviroment(gym.Env):
         print(self.getObs()[:, :, 0])
 
 
-def main():
-    deliveryLocation = houseDelivery()
-    price = createPriceArray(village)
+##def main():
+   # deliveryLocation = houseDelivery()
+    #price = createPriceArray(village)
 
-    env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
+    #env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
 
-    obs, info = env.reset(options = {"deliveryLocation": deliveryLocation})
-    print("start grid")
-    env.print()
+    #bs, info = env.reset(options = {"deliveryLocation": deliveryLocation})
+    #print("start grid")
+    #env.print()
 
-    done = False
-    while not done:
-        action = env.actionSpace.sample()
-        obs, reward, done, truncated, info = env.step(action)
+    #done = False
+    #while not done:
+        #action = env.actionSpace.sample()
+        #obs, reward, done, truncated, info = env.step(action)
 
-    print("Action:", action, "Reward:", reward)
-    env.print()
+    #print("Action:", action, "Reward:", reward)
+    #env.print()
 
-    if done:
-        print("Taxi Reached")
+    #if done:
+        #print("Taxi Reached")
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+    #main()
