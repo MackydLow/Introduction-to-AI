@@ -68,7 +68,7 @@ def forwardPass(env, policy, discountFactor):
     logProbActions = torch.cat(logProbAction)
     stepwiseReturns = calculateStepWise(rewards, discountFactor)
 
-    return episodeReturn, stepwiseReturns, logProbAction
+    return episodeReturn, stepwiseReturns, logProbActions
 
 def calculateLoss(stepwiseReturns, logProbActions):
     return -(stepwiseReturns * logProbActions).sum()
