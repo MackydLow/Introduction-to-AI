@@ -2,17 +2,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 
+
 class PolicyModel(nn.Module):
-    def __init__(self, inputChannels, hiddenDim, outputDim, droupout):
+    def __init__(self, inputChannels = 1, hiddenDim = 128, outputDim = 4, dropout = 0.1):
         super().__init__()
-        inputChannels = 1
-        hiddenDim = 128
-        outputDim = 4
-        dropout = 0.1
         kernelSize = 3
         padding = 1
 
-        self.convol = nn.seq(
+        self.convol = nn.Sequential(
             nn.convol2D(inputChannels, 16, kernelSize, padding),
             nn.ReLU(),
             nn.convol2D(16, 32, kernelSize, padding),
