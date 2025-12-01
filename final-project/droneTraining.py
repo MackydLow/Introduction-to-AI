@@ -41,7 +41,6 @@ def calculateStepWise(reward, discountFactor):
     return (returns - returns.mean()) / (returns.std() + EPS)
 
 def forwardPass(env, policy, discountFactor):
-    print("action:", action)
     logProbAction = []
     rewards = []
 
@@ -57,7 +56,7 @@ def forwardPass(env, policy, discountFactor):
         distr = dis.Categorical(probs)
 
         action = distr.sample()
-        logProb = distr.log_prob(action)
+        logProb = distr.log_prob(action)      
 
         observation, reward, terminated, truncated, _ = env.step(action.item())
         done = terminated or truncated
