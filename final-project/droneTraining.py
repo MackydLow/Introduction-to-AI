@@ -5,8 +5,10 @@ import numpy as np
 import gymnasium as gym
 
 import policyModel as pm
-import enviroment as env 
-from enviroment import village, houseDelivery, createPriceArray
+from policyModel import PolicyModel
+
+import enviroment as envr
+from enviroment import village, houseDelivery, createPriceArray, villageEnviroment
 
 HIDDEN_DIM = 128
 DROPOUT = 0.2
@@ -82,8 +84,43 @@ def updatePolicy(stepwiseReturns, logProbAction, optimizer):
     return loss.item()
 
 def main():
-    print(village)
-    
+    deliveryLocation = houseDelivery()
+    price = createPriceArray(village)
+
+    env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
+
+    inputDim = int(np.prod(env.observationSpace.shape))
+    outputDim = env.actionSpace.n
+
+    policy = PolicyModel(inputDim, HIDDEN_DIM, outputDim, DROPOUT)
+    optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
+
+    episode_returns = []
+
+    for episode in range(1, MAX_EPOCHS + 1):
+        episodeReturn, stepwiseReturns, logProbActions = forwardPass(env, policy, DISCOUNT_FACTOR)
+
+        if episodeReturn > 0 and episode < MAX_BOOST_EPOCH:
+            optimizer.param_groups[0]["lr"] = LEARNING_RATE_BOOST
+
+        _ = updatePolicy(stepwiseReturns, logProbActions, optimizer)
+
+        optimizer.param_groups[0]["lr"] = LEARNING_RATE_BOOST
+
+        episode_returns.append(episodeReturn)
+        mean_return = np.mean(episode_returns[-N_TRIALS:])
+
+        if episode % PRINT_INTERVAL == 0:
+            print(f"| Episode {episode:4} | "
+                  f"Mean {N_TRIALS}: {mean_return:6.2f} | " 
+                  f"Return: {episode_returns:6.2f}")
+
+        if mean_return >= REWARD_THRESHOLD:
+            print(f"Reached reward threshold at episode {episode}")
+            break
+
+    torch.save(policy.state_dict(), "drone_policy.pt")
+    print("saved training model -> drone_policy.pt")
 
 if __name__ == "__main__":
     main()
