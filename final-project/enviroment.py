@@ -83,7 +83,6 @@ class villageEnviroment(gym.Env):
         deliveryPickup = np.argwhere(self.village == 5)
         self.dronePos = tuple(deliveryPickup[0])
 
-        print(self.dronePos, "drone")
         return self.getObs(), {}
     
     def step(self, move):
@@ -105,6 +104,8 @@ class villageEnviroment(gym.Env):
 
         reward = float(self.price[nx][ny])
         terminated = False
+
+        print(self.dronePos, "drone")
 
         if (nx, ny) == self.dropOff:
             reward += 20
