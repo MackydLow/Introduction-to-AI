@@ -82,7 +82,7 @@ class villageEnviroment(gym.Env):
         super().reset(seed=seed)
 
         deliveryPickup = np.argwhere(self.village == 5)
-        self.dronePos = list(deliveryPickup[0])
+        self.dronePos = tuple(deliveryPickup[0])
 
         print(self.dronePos, "drone")
         return self.getObs(), {}
