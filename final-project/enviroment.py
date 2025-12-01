@@ -84,7 +84,7 @@ class villageEnviroment(gym.Env):
         deliveryPickup = np.argwhere(self.village == 5)
         self.dronePos = list(deliveryPickup[0])
 
-        print(self.dronePos + "drone")
+        print(self.dronePos, "drone")
         return self.getObs(), {}
     
     def step(self, move):
