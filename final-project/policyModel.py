@@ -14,7 +14,7 @@ class PolicyModel(nn.Module):
             nn.ReLU(),
             nn.Conv2d(16, 32, kernelSize, padding),
             nn.ReLU(),
-            nn.Flatten
+            nn.Flatten()
         )
 
         self.nnfc1 = nn.lLinear(hiddenDim)
