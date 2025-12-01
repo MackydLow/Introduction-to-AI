@@ -50,9 +50,9 @@ def forwardPass(env, policy, discountFactor):
     episodeReturn = 0.0
 
     while not done:
-        obsFlat = torch.FloatTensor(observation).view(1, -1)
+        obsTensor = torch.FloatTensor(observation).unsqueeze(0)
 
-        probs = policy(obsFlat)
+        probs = policy(obsTensor)
         distr = dis.Categorical(probs)
 
         action = distr.sample()

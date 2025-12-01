@@ -25,10 +25,9 @@ class PolicyModel(nn.Module):
 
     def forward(self, i):
         i = i.permute(0, 3, 1, 2)
-
-        i.self.convol(i)
-        i.F.relu(self.nnfc1(i))
-        i.self.dropout(i)
-        i.self.nnfc2(i)
+        i = self.convol(i)
+        i = nnf.relu(self.nnfc1(i))
+        i = self.dropout(i)
+        i = self.nnfc2(i)
 
         return self.softmax(i)
