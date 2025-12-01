@@ -41,6 +41,7 @@ def calculateStepWise(reward, discountFactor):
     return (returns - returns.mean()) / (returns.std() + EPS)
 
 def forwardPass(env, policy, discountFactor):
+    print("action:", action)
     logProbAction = []
     rewards = []
 
