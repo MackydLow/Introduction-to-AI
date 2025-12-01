@@ -102,20 +102,20 @@ def main():
     for episode in range(1, MAX_EPOCHS + 1):
         episodeReturn, stepwiseReturns, logProbActions = forwardPass(env, policy, DISCOUNT_FACTOR)
 
-        if episodeReturn > 0 and episode < MAX_BOOST_EPOCH:
+        if episode < MAX_BOOST_EPOCH:
             optimizer.param_groups[0]["lr"] = LEARNING_RATE_BOOST
+        else:
+            optimizer.param_groups[0]["lr"] = LEARNING_RATE
 
         _ = updatePolicy(stepwiseReturns, logProbActions, optimizer)
 
-        optimizer.param_groups[0]["lr"] = LEARNING_RATE_BOOST
-
-        episode_returns.append(episodeReturn)
-        mean_return = np.mean(episode_returns[-N_TRIALS:])
+        episodeReturn.append(episodeReturn)
+        mean_return = np.mean(episodeReturns[-N_TRIALS:])
 
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
                   f"Mean {N_TRIALS}: {mean_return:6.2f} | " 
-                  f"Return: {episode_returns:6.2f}")
+                  f"Return: {episodeReturn:6.2f}")
 
         if mean_return >= REWARD_THRESHOLD:
             print(f"Reached reward threshold at episode {episode}")
