@@ -8,7 +8,7 @@ import policyModel as pm
 from policyModel import PolicyModel
 
 import enviroment as env
-from enviroment import village, houseDelivery, createPriceArray, reset, villageEnviroment
+from enviroment import village, houseDelivery, createPriceArray, villageEnviroment
 
 HIDDEN_DIM = 128
 DROPOUT = 0.2

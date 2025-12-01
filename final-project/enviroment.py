@@ -102,7 +102,7 @@ class villageEnviroment(gym.Env):
         else :
             nx, ny = x,y
 
-        self.dronePos = [x, y]
+        self.dronePos = (x, y)
 
         reward = float(self.price[nx][ny])
         terminated = False
