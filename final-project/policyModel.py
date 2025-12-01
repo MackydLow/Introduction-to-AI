@@ -4,13 +4,13 @@ import torch.nn.functional as nnf
 
 
 class PolicyModel(nn.Module):
-    def __init__(self, inputChannels = 1, hiddenDim = 128, outputDim = 4, dropout = 0.1):
+    def __init__(self, inputDim, hiddenDim, outputDim, dropout):
         super().__init__()
         kernelSize = 3
         padding = 1
 
         self.convol = nn.Sequential(
-            nn.Conv2d(inputChannels, 16, kernelSize, padding),
+            nn.Conv2d(1, 16, kernelSize, padding),
             nn.ReLU(),
             nn.Conv2d(16, 32, kernelSize, padding),
             nn.ReLU(),
@@ -18,17 +18,17 @@ class PolicyModel(nn.Module):
         )
 
         self.nnfc1 = nn.LazyLinear(hiddenDim)
+        self.nnfc2 = nn.Linear(hiddenDim, outputDim)
+
         self.dropout = nn.Dropout(dropout)
-        self.nnfc2 = nn.LazyLinear(hiddenDim, outputDim)
+        self.softmax = nn.Softmax(dim=-1)
 
     def forward(self, i):
-        if i.dim() == 4 and i.shape[-1] == 1:
-            i = i.permute(0, 3, 1, 2)
+        i = i.permute(0, 3, 1, 2)
 
-        i = self.convol(i)
-        i = self.nnfc1(i)
-        i = self.dropout(i)
-        i = nnf.relu(i)
-        i = self.nnfc2(i)
+        i.self.convol(i)
+        i.F.relu(self.nnfc1(i))
+        i.self.dropout(i)
+        i.self.nnfc2(i)
 
-        return nnf.softmax(i, dim=-1)
+        return self.softmax(i)
