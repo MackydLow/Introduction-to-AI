@@ -7,8 +7,8 @@ import gymnasium as gym
 import policyModel as pm
 from policyModel import PolicyModel
 
-import enviroment as envr
-from enviroment import village, houseDelivery, createPriceArray, villageEnviroment
+import enviroment as env
+from enviroment import village, houseDelivery, createPriceArray, reset, villageEnviroment
 
 HIDDEN_DIM = 128
 DROPOUT = 0.2
