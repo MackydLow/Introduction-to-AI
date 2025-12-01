@@ -89,6 +89,9 @@ def main():
     deliveryLocation = houseDelivery()
     price = createPriceArray(village)
 
+    print(deliveryLocation)
+    print(price)
+
     env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
 
     inputDim = int(np.prod(env.observation_space.shape))
