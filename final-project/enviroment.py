@@ -105,8 +105,6 @@ class villageEnviroment(gym.Env):
         reward = float(self.price[nx][ny])
         terminated = False
 
-        print(self.dronePos, "drone")
-
         if (nx, ny) == self.dropOff:
             reward += 20
             terminated = True
