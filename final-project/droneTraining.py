@@ -109,8 +109,8 @@ def main():
 
         _ = updatePolicy(stepwiseReturns, logProbActions, optimizer)
 
-        episodeReturn.append(episodeReturn)
-        mean_return = np.mean(episodeReturns[-N_TRIALS:])
+        episode_returns.append(episodeReturn)
+        mean_return = np.mean(episodeReturn[-N_TRIALS:])
 
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
