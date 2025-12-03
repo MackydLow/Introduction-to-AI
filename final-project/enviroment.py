@@ -102,8 +102,6 @@ class villageEnviroment(gym.Env):
 
         self.dronePos = (nx, ny)
 
-        print(self.dronePos, "Drone")
-
         reward = float(self.price[nx][ny])
         terminated = False
 
