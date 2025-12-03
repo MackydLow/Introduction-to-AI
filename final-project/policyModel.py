@@ -10,9 +10,9 @@ class PolicyModel(nn.Module):
         padding = 1
 
         self.convol = nn.Sequential(
-            nn.Conv2d(1, 16, kernelSize, padding),
+            nn.Conv2d(1, 16, kernelSize, padding=padding),
             nn.ReLU(),
-            nn.Conv2d(16, 32, kernelSize, padding),
+            nn.Conv2d(16, 32, kernelSize, padding=padding),
             nn.ReLU(),
             nn.Flatten()
         )
