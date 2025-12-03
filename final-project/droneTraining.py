@@ -68,7 +68,7 @@ def forwardPass(env, policy, discountFactor):
         rewards.append(float(reward))
         episodeReturn += float(reward)
 
-        steps =+ 1
+        steps += 1
 
     logProbActions = torch.stack(logProbAction).squeeze()
     stepwiseReturns = calculateStepWise(rewards, discountFactor)
