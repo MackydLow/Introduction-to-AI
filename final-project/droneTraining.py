@@ -71,6 +71,9 @@ def forwardPass(env, policy, discountFactor):
     return episodeReturn, stepwiseReturns, logProbActions
 
 def calculateLoss(stepwiseReturns, logProbActions):
+    stepwiseReturns = stepwiseReturns.view(-1)
+    logProbActions = logProbActions.view(-1)
+    assert stepwiseReturns.shape == logProbActions.shape, f"shape mismatch: {stepwiseReturns.shape} vs {logProbActions.shape}"
     return -(stepwiseReturns * logProbActions).sum()
 
 def updatePolicy(stepwiseReturns, logProbAction, optimizer):
