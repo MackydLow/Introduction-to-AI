@@ -42,11 +42,11 @@ def createPriceArray(village):
         newPriceRow = []
         for y in range (len(village)):
             if village[x][y] == 0 or village[x][y] == 1 or village[x][y] == 5:
-                newPriceRow.append(-1)
+                newPriceRow.append(-0.1)
             elif village[x][y] == 2:
-                newPriceRow.append(-3)
+                newPriceRow.append(-1)
             elif village[x][y] ==3 or village[x][y] == 4:
-                newPriceRow.append(-20)
+                newPriceRow.append(-10)
         price.append(newPriceRow)
 
     return price
@@ -118,7 +118,7 @@ class villageEnviroment(gym.Env):
     def getObs(self):
         obs = np.copy(self.village)
         obs[self.dronePos[0], self.dronePos[1]] = 9
-        return obs[:, :, None]
+        return (obs[:, :, None].astype(np.float32)) / 4
     
     def print(self):
         print(self.getObs()[:, :, 0])

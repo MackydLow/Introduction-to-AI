@@ -49,7 +49,10 @@ def forwardPass(env, policy, discountFactor):
     done = False
     episodeReturn = 0.0
 
-    while not done:
+    steps = 0
+    maxSteps = 300   
+
+    while not done and steps < maxSteps:
         obsTensor = torch.FloatTensor(observation).unsqueeze(0)
 
         probs = policy(obsTensor)
@@ -64,6 +67,8 @@ def forwardPass(env, policy, discountFactor):
         logProbAction.append(logProb)
         rewards.append(float(reward))
         episodeReturn += float(reward)
+
+        steps =+ 1
 
     logProbActions = torch.stack(logProbAction).squeeze()
     stepwiseReturns = calculateStepWise(rewards, discountFactor)
