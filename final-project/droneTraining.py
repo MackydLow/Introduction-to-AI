@@ -53,6 +53,7 @@ def forwardPass(env, policy, discountFactor):
     maxSteps = 300   
 
     while not done and steps < maxSteps:
+        print(steps)
         obsTensor = torch.FloatTensor(observation).unsqueeze(0)
 
         probs = policy(obsTensor)
