@@ -94,13 +94,7 @@ def updatePolicy(stepwiseReturns, logProbAction, optimizer):
 def main():
 
     print("run")
-    deliveryLocation = houseDelivery()
-    price = createPriceArray(village)
-
-    print(deliveryLocation)
-    print(price)
-
-    env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
+  x
 
     inputDim = int(np.prod(env.observation_space.shape))
     outputDim = env.actionSpace.n

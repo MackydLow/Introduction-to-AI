@@ -75,6 +75,7 @@ class villageEnviroment(gym.Env):
         
         self.dronePos = None
         self.dropOff = deliveryLocation 
+        self.dropOff = (deliveryLocation[0], deliveryLocation[1])
         self.reset()
 
     def reset(self, seed = None, options = None):
