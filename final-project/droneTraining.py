@@ -19,8 +19,8 @@ N_TRIALS = 20
 REWARD_THRESHOLD = 250 
 PRINT_INTERVAL = 10
 
-LEARNING_RATE = 0.003
-LEARNING_RATE_BOOST = 0.006
+LEARNING_RATE = 0.001
+LEARNING_RATE_BOOST = 0.0005
 MAX_BOOST_EPOCH = 800
 
 EPS = 1e-8
@@ -62,7 +62,7 @@ def forwardPass(env, policy, discountFactor):
         logProb = distr.log_prob(action)      
 
         observation, reward, terminated, truncated, _ = env.step(action.item())
-        done = terminated or truncated
+        done = terminated or truncated or (steps >= maxSteps)
 
         logProbAction.append(logProb)
         rewards.append(float(reward))
@@ -81,12 +81,13 @@ def calculateLoss(stepwiseReturns, logProbActions):
     assert stepwiseReturns.shape == logProbActions.shape, f"shape mismatch: {stepwiseReturns.shape} vs {logProbActions.shape}"
     return -(stepwiseReturns * logProbActions).sum()
 
-def updatePolicy(stepwiseReturns, logProbAction, optimizer):
+def updatePolicy(policy, stepwiseReturns, logProbAction, optimizer):
     stepwiseReturns = stepwiseReturns.detach()
     loss = calculateLoss(stepwiseReturns, logProbAction)
 
     optimizer.zero_grad()
     loss.backward()
+    torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
     optimizer.step()
 
     return loss.item()
@@ -94,7 +95,13 @@ def updatePolicy(stepwiseReturns, logProbAction, optimizer):
 def main():
 
     print("run")
-  x
+    deliveryLocation = houseDelivery()
+    price = createPriceArray(village)
+
+    print(deliveryLocation)
+    print(price)
+
+    env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
 
     inputDim = int(np.prod(env.observation_space.shape))
     outputDim = env.actionSpace.n
@@ -112,7 +119,7 @@ def main():
         else:
             optimizer.param_groups[0]["lr"] = LEARNING_RATE
 
-        _ = updatePolicy(stepwiseReturns, logProbActions, optimizer)
+        _ = updatePolicy(policy, stepwiseReturns, logProbActions, optimizer)
 
         episode_returns.append(episodeReturn)
         mean_return = np.mean(episode_returns[-N_TRIALS:])
@@ -131,3 +138,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    

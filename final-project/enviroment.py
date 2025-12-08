@@ -104,6 +104,9 @@ class villageEnviroment(gym.Env):
         self.dronePos = (nx, ny)
 
         reward = float(self.price[nx][ny])
+
+        reward -= 0.1
+        
         terminated = False
 
         if (nx, ny) == self.dropOff:
@@ -146,3 +149,5 @@ class villageEnviroment(gym.Env):
 
 #if __name__ == "__main__":
     #main()
+
+
