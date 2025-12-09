@@ -105,8 +105,8 @@ class villageEnviroment(gym.Env):
 
         reward = float(self.price[nx][ny])
 
-        reward -= 0.1
-        
+        reward -= 0.01
+
         terminated = False
 
         if (nx, ny) == self.dropOff:
