@@ -81,7 +81,8 @@ def forwardPass(env, policy, discountFactor):
     return episodeReturn, stepwiseReturns, logProbActions, entrop
 
 def calculateLoss(stepwiseReturns, logProbActions, entrop):
-    policyLoss = -(stepwiseReturns * logProbActions).sum()
+    adv = stepwiseReturns - (stepwiseReturns.mean())
+    policyLoss = -(adv * logProbActions).sum() - 0.01 * entrop.sum()
     entropLoss = - ENTROPY_COEF * entrop.sum()
     return policyLoss + entropLoss
 
@@ -121,6 +122,10 @@ def main():
         episodeReturn, stepwiseReturns, logProbActions, entrop = forwardPass(env, policy, DISCOUNT_FACTOR)
         loss = calculateLoss(stepwiseReturns, logProbActions, entrop)
 
+        lr = LEARNING_RATE * (0.99 ** episode)
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
@@ -142,5 +147,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
+    
     
