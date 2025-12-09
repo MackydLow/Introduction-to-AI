@@ -111,12 +111,12 @@ class villageEnviroment(gym.Env):
 
         reward -= 0.01
 
-        reward += (oldDist - newDist) * 0.1
+        reward += (oldDist - newDist) * 0.5
 
         terminated = False
 
         if (nx, ny) == self.dropOff:
-            reward += 20
+            reward += 75
             terminated = True
 
         obs = self.getObs()

@@ -21,6 +21,7 @@ PRINT_INTERVAL = 10
 
 LEARNING_RATE = 0.001
 LEARNING_RATE_BOOST = 0.0005
+ENTROPY_COEF = 0.01
 MAX_BOOST_EPOCH = 800
 
 EPS = 1e-8
@@ -35,13 +36,14 @@ def calculateStepWise(reward, discountFactor):
 
     returns = torch.tensor(returns, dtype = torch.float32)
 
-    if returns.std().item() == 0:
+    if returns.std().item() < EPS:
         return returns - returns.mean()
-    
-    return (returns - returns.mean()) / (returns.std() + EPS)
+    else:
+        return (returns - returns.mean()) / (returns.std() + EPS)
 
 def forwardPass(env, policy, discountFactor):
     logProbAction = []
+    entrop = []
     rewards = []
 
     policy.train()
@@ -59,27 +61,29 @@ def forwardPass(env, policy, discountFactor):
         distr = dis.Categorical(probs)
 
         action = distr.sample()
-        logProb = distr.log_prob(action)      
+        logProb = distr.log_prob(action)  
+        entropy = distr.entropy()    
 
         observation, reward, terminated, truncated, _ = env.step(action.item())
-        done = terminated or truncated or (steps >= maxSteps)
+        done = terminated or truncated 
 
         logProbAction.append(logProb)
+        entrop.append(entropy)
         rewards.append(float(reward))
         episodeReturn += float(reward)
 
         steps += 1
 
-    logProbActions = torch.stack(logProbAction).squeeze()
+    logProbActions = torch.stack(logProbAction)
+    entrop = torch.stack(entrop)
     stepwiseReturns = calculateStepWise(rewards, discountFactor)
 
     return episodeReturn, stepwiseReturns, logProbActions
 
-def calculateLoss(stepwiseReturns, logProbActions):
-    stepwiseReturns = stepwiseReturns.view(-1)
-    logProbActions = logProbActions.view(-1)
-    assert stepwiseReturns.shape == logProbActions.shape, f"shape mismatch: {stepwiseReturns.shape} vs {logProbActions.shape}"
-    return -(stepwiseReturns * logProbActions).sum()
+def calculateLoss(stepwiseReturns, logProbActions, entrop):
+    policyLoss = -(stepwiseReturns * logProbActions).sum()
+    entropLoss = - ENTROPY_COEF * entrop.sum()
+    return policyLoss + entropLoss
 
 def updatePolicy(policy, stepwiseReturns, logProbAction, optimizer):
     stepwiseReturns = stepwiseReturns.detach()
@@ -94,13 +98,9 @@ def updatePolicy(policy, stepwiseReturns, logProbAction, optimizer):
 
 def main():
 
-    print("run")
+    print("Starting Training")
     deliveryLocation = houseDelivery()
     price = createPriceArray(village)
-
-    print(deliveryLocation)
-    print(price)
-
     env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
 
     inputDim = int(np.prod(env.observation_space.shape))
@@ -109,32 +109,36 @@ def main():
     policy = PolicyModel(inputDim, HIDDEN_DIM, outputDim, DROPOUT)
     optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
 
+    sched = torch.optim.lr_scheduler.StepLR(
+        optimizer,
+        stepSize = 300
+        gamma = 0.5
+    )
+
     episode_returns = []
 
     for episode in range(1, MAX_EPOCHS + 1):
-        episodeReturn, stepwiseReturns, logProbActions = forwardPass(env, policy, DISCOUNT_FACTOR)
+        episodeReturn, stepwiseReturns, logProbActions, entrop = forwardPass(env, policy, DISCOUNT_FACTOR)
+        loss = calculateLoss(stepwiseReturns, logProbActions, entrop)
 
-        if episode < MAX_BOOST_EPOCH:
-            optimizer.param_groups[0]["lr"] = LEARNING_RATE_BOOST
-        else:
-            optimizer.param_groups[0]["lr"] = LEARNING_RATE
+        optimizer.zero_grad()
+        loss.backward()
+        torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
+        optimizer.step()
 
-        _ = updatePolicy(policy, stepwiseReturns, logProbActions, optimizer)
+        sched.step()
 
         episode_returns.append(episodeReturn)
-        mean_return = np.mean(episode_returns[-N_TRIALS:])
+        avgReturn = np.mean(episode_returns[-20:])
 
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
-                  f"Mean {N_TRIALS}: {mean_return:6.2f} | " 
-                  f"Return: {episodeReturn:6.2f}")
-
-        if mean_return >= REWARD_THRESHOLD:
-            print(f"Reached reward threshold at episode {episode}")
-            break
-
-    torch.save(policy.state_dict(), "drone_policy.pt")
-    print("saved training model -> drone_policy.pt")
+                  f"Mean 20: {avgReturn:6.2f} | " 
+                  f"Return: {episodeReturn:6.2f} | "
+                  f"LR: {optimizer.param_groups[0]['lr']:.6f}")
+            
+    torch.save(policy.state_dict(), "drone_policy_entropy.pt")
+    print("done saved")
 
 if __name__ == "__main__":
     main()
