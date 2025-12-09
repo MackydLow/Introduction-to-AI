@@ -101,11 +101,17 @@ class villageEnviroment(gym.Env):
         else :
             nx, ny = x,y
 
+        #check distance
+        oldDist = abs(x - self.dropOff[0]) + abs(y-self.dropOff[1])
+        newDist = abs(nx - self.dropOff[0]) + abs(ny-self.dropOff[1])
+
         self.dronePos = (nx, ny)
 
-        reward = float(self.price[nx][ny])
+        reward = float(self.price[nx][ny]) * 0.01
 
         reward -= 0.01
+
+        reward += (oldDist - newDist) * 0.1
 
         terminated = False
 
