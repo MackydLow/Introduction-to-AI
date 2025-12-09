@@ -111,7 +111,7 @@ def main():
 
     sched = torch.optim.lr_scheduler.StepLR(
         optimizer,
-        stepSize = 300,
+        step_size = 300,
         gamma = 0.5
     )
 
