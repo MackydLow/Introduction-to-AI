@@ -110,7 +110,7 @@ def main():
     policy = PolicyModel(inputDim, HIDDEN_DIM, outputDim, DROPOUT)
     optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
 
-    batchEpisode = 20
+    batchEpisode = 50
 
     episode_returns = []
 
@@ -148,8 +148,8 @@ def main():
 
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
-                  f"Mean {N_TRIALS}: {mean20::6.2f} | " 
-                  f"Return: {batchReward:6.2f} | "
+                  f"Mean {N_TRIALS}: {mean20:6.2f} | " 
+                  f"Return: {avgBatch:6.2f} | "
                   f"LR: {lr:.6f}")
             
         if mean20 >= REWARD_THRESHOLD:
