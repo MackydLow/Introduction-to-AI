@@ -28,7 +28,7 @@ LEARNING_RATE_BOOST = 0.0005
 ENTROPY_COEF = 0.01
 MAX_BOOST_EPOCH = 800
 
-EPS = 1e-8
+EPS = 1e-5
 
 #calculate discount returns
 def calculateStepWise(reward, discountFactor):
@@ -64,8 +64,8 @@ def forwardPass(env, policy, discountFactor):
     while not done and steps < maxSteps:
         obsTensor = torch.FloatTensor(observation).unsqueeze(0)
 
-        probs = policy(obsTensor)
-        distr = dis.Categorical(probs)
+        probls = policy(obsTensor)
+        distr = dis.Categorical(probls)
 
         action = distr.sample()
         logProb = distr.log_prob(action)  
@@ -106,7 +106,7 @@ def main():
     price = createPriceArray(village)
     env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
 
-    inputDim = int(np.prod(env.observation_space.shape))
+    inputDim = int(np.prod(env.observationSpace.shape))
     outputDim = env.actionSpace.n
 
     #set up policy
@@ -116,7 +116,7 @@ def main():
     #set episdoes 
     batchEpisodes = 40
 
-    episode_returns = []
+    episodeReturns = []
 
     #start training loop
     for episode in range(1, MAX_EPOCHS + 1):
@@ -132,7 +132,7 @@ def main():
             allLogProbs.append(logProbActions)
             batchReward.append(episodeReturn)
             allEntrop.append(entrop)
-            episode_returns.append(episodeReturn)
+            episodeReturns.append(episodeReturn)
 
         #reinforce loss
         allReturns = torch.cat(allReturns)
@@ -147,10 +147,10 @@ def main():
         adv = (adv - adv.mean()) /  (adv.std() + 1e-8)
 
         #calulcate loss
-        Ploss = -(adv * allLogProbs).sum()
+        Polloss = -(adv * allLogProbs).sum()
         entropLoss = -ENTROPY_COEF * allEntrop.sum()
 
-        loss = Ploss + entropLoss
+        loss = Polloss + entropLoss
 
         #optimization
         optimizer.zero_grad()
@@ -160,20 +160,20 @@ def main():
 
         #set learning rate decay
         lr = LEARNING_RATE * (0.995 ** episode)
-        lr = max(lr, 1e-5)
+        lr = max(lr, EPS)
         optimizer.param_groups[0]["lr"] = lr
 
-        mean20 = np.mean(episode_returns[-N_TRIALS:])
-        avgBatch = np.mean(batchReward)
+        tMean = np.mean(episodeReturns[-N_TRIALS:])
+        avgBatchReward = np.mean(batchReward)
 
         #print progress
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
-                  f"Mean {N_TRIALS}: {mean20:6.2f} | " 
-                  f"Return: {avgBatch:6.2f} | "
+                  f"Mean {N_TRIALS}: {tMean:6.2f} | " 
+                  f"Return: {avgBatchReward:6.2f} | "
                   f"LR: {lr:.6f}")
             
-        if mean20 >= REWARD_THRESHOLD:
+        if tMean >= REWARD_THRESHOLD:
             print("reached threshold")
             break
             
@@ -183,4 +183,5 @@ def main():
 if __name__ == "__main__":
     main()
     
+
     
