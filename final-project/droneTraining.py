@@ -28,7 +28,7 @@ LEARNING_RATE_BOOST = 0.0005
 ENTROPY_COEF = 0.01
 MAX_BOOST_EPOCH = 800
 
-EPS = 1e-5
+EPS = 1e-8
 
 #calculate discount returns
 def calculateStepWise(reward, discountFactor):
@@ -160,7 +160,7 @@ def main():
 
         #set learning rate decay
         lr = LEARNING_RATE * (0.995 ** episode)
-        lr = max(lr, EPS)
+        lr = max(lr, 1e-4)
         optimizer.param_groups[0]["lr"] = lr
 
         tMean = np.mean(episodeReturns[-N_TRIALS:])
