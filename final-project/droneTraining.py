@@ -1,15 +1,19 @@
+#import from liabry
 import torch
 import torch.optim as opt
 import torch.distributions as dis
 import numpy as np
 import gymnasium as gym
 
+#import policy Model
 import policyModel as pm
 from policyModel import PolicyModel
 
+#import enviroment and all neccessary functions
 import enviroment as env
 from enviroment import village, houseDelivery, createPriceArray, villageEnviroment
 
+#setup parameters
 HIDDEN_DIM = 128
 DROPOUT = 0.2
 
@@ -26,6 +30,7 @@ MAX_BOOST_EPOCH = 800
 
 EPS = 1e-8
 
+#calculate discount returns
 def calculateStepWise(reward, discountFactor):
     returns = []
     r = 0.0
@@ -41,6 +46,7 @@ def calculateStepWise(reward, discountFactor):
     else:
         return (returns - returns.mean()) / (returns.std() + EPS)
 
+#collect training data
 def forwardPass(env, policy, discountFactor):
     logProbAction = []
     entrop = []
@@ -54,6 +60,7 @@ def forwardPass(env, policy, discountFactor):
     steps = 0
     maxSteps = 300   
 
+    #sample a action and get probability 
     while not done and steps < maxSteps:
         obsTensor = torch.FloatTensor(observation).unsqueeze(0)
 
@@ -64,9 +71,11 @@ def forwardPass(env, policy, discountFactor):
         logProb = distr.log_prob(action)  
         entropy = distr.entropy()    
 
+        #check if episode has ended 
         observation, reward, terminated, truncated, _ = env.step(action.item())
         done = terminated or truncated 
 
+        #store info 
         logProbAction.append(logProb)
         entrop.append(entropy)
         rewards.append(float(reward))
@@ -80,6 +89,7 @@ def forwardPass(env, policy, discountFactor):
 
     return episodeReturn, stepwiseReturns, logProbActions, entrop
 
+#computes gradient loss and entropy 
 def calculateLoss(stepwiseReturns, logProbActions, entrop):
     adv = stepwiseReturns - (stepwiseReturns.mean())
     policyLoss = -(adv * logProbActions).sum() - 0.01 * entrop.sum()
@@ -88,7 +98,7 @@ def calculateLoss(stepwiseReturns, logProbActions, entrop):
 
 def updatePolicy(policy, stepwiseReturns, logProbAction, optimizer):
     stepwiseReturns = stepwiseReturns.detach()
-    loss = calculateLoss(stepwiseReturns, logProbAction)
+    loss = calculateLoss(stepwiseReturns, logProbAction, entrop)
 
     optimizer.zero_grad()
     loss.backward()
@@ -110,7 +120,7 @@ def main():
     policy = PolicyModel(inputDim, HIDDEN_DIM, outputDim, DROPOUT)
     optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
 
-    batchEpisode = 20
+    batchEpisode = 30
 
     episode_returns = []
 
@@ -119,21 +129,28 @@ def main():
         allReturns = []
         allLogProbs = []
         batchReward = []
+        allEntrop = []
 
         for _ in range(batchEpisode):
             episodeReturn, stepwiseReturns, logProbActions, entrop = forwardPass(env, policy, DISCOUNT_FACTOR)
             allReturns.append(stepwiseReturns)
             allLogProbs.append(logProbActions)
             batchReward.append(episodeReturn)
+            allEntrop.append(entrop)
             episode_returns.append(episodeReturn)
 
         allReturns = torch.cat(allReturns)
         allLogProbs = torch.cat(allLogProbs)
+        allEntrop = torch.cat(allEntrop)
 
         baseline = allReturns.mean()
         adv = allReturns - baseline
+        adv = (adv - adv.mean()) /  (adv.std() + 1e-8)
 
-        loss = -(adv.detach() * allLogProbs).sum()
+        Ploss = -(adv.detach() * allLogProbs).sum()
+        entropLoss = -ENTROPY_COEF * allEntrop.sum()
+
+        loss = Ploss + entropLoss
 
         optimizer.zero_grad()
         loss.backward()

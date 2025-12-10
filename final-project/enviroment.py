@@ -65,7 +65,6 @@ class villageEnviroment(gym.Env):
         self.rows, self.columns = village.shape
 
         self.actionSpace = gym.spaces.Discrete(4)
-
         self.observation_space = gym.spaces.Box(
             low = 0,
             high = np.max(village),
@@ -101,7 +100,7 @@ class villageEnviroment(gym.Env):
         else :
             nx, ny = x,y
 
-        #check distance
+        
         oldDist = abs(x - self.dropOff[0]) + abs(y-self.dropOff[1])
         newDist = abs(nx - self.dropOff[0]) + abs(ny-self.dropOff[1])
 
@@ -130,37 +129,3 @@ class villageEnviroment(gym.Env):
     
     def print(self):
         print(self.getObs()[:, :, 0])
-
-
-##def main():
-   # deliveryLocation = houseDelivery()
-    #price = createPriceArray(village)
-
-    #env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
-
-    #bs, info = env.reset(options = {"deliveryLocation": deliveryLocation})
-    #print("start grid")
-    #env.print()
-
-    #done = False
-    #while not done:
-        #action = env.actionSpace.sample()
-        #obs, reward, done, truncated, info = env.step(action)
-
-    #print("Action:", action, "Reward:", reward)
-    #env.print()
-
-    #if done:
-        #print("Taxi Reached")
-
-#if __name__ == "__main__":
-    #main()
-
-
-
-
-    
-
-
-
-
