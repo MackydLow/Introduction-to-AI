@@ -1,10 +1,11 @@
+#imports
 import random
 
 import numpy as np
 import gymnasium as gym  
 
 
-
+#village index
 #0 - road (drone can move here, cost: 1)
 #1 - green space (drone can move here, cost: 1)
 #2 - high wind (drone can move here, cost: 3)
@@ -25,6 +26,7 @@ village = [
     [1, 1, 3, 0, 3, 3, 3, 3, 3, 3]
 ]
 
+#get house that will be delivered to
 def houseDelivery():
     randomX = random.randint(0, 9)
     randomY = random.randint(0, 9)
@@ -36,6 +38,7 @@ def houseDelivery():
         randomX = random.randint(0, 9)
         randomY = random.randint(0, 9)
 
+#create array with price for each move
 def createPriceArray(village):
     price = []
     for x in range(len(village)):
@@ -50,13 +53,15 @@ def createPriceArray(village):
         price.append(newPriceRow)
 
     return price
-            
+
+#set up gym enviroment            
 class villageEnviroment(gym.Env):
     metadata = {"render_modes": ["human"]}
 
     def __init__(self, village, price, deliveryLocation: tuple):
         super().__init__()
 
+        #convert to numpy
         village = np.array(village)
         price = np.array(price)
 
@@ -64,56 +69,68 @@ class villageEnviroment(gym.Env):
         self.price = price
         self.rows, self.columns = village.shape
 
+        #set up all 4 possible moves 
         self.actionSpace = gym.spaces.Discrete(4)
+
+        #set up obervation space
         self.observation_space = gym.spaces.Box(
             low = 0,
             high = np.max(village),
             shape = (self.rows, self.columns, 1),
             dtype=np.float32
         )
-        
+        #initiliase drone and drop off
         self.dronePos = None
         self.dropOff = deliveryLocation 
         self.dropOff = (deliveryLocation[0], deliveryLocation[1])
         self.reset()
 
+    #reset to starting state
     def reset(self, seed = None, options = None):
         super().reset(seed=seed)
 
+        #find pickup area
         deliveryPickup = np.argwhere(self.village == 5)
         self.dronePos = tuple(deliveryPickup[0])
 
         return self.getObs(), {}
     
+    #move the drone
     def step(self, move):
         x, y = self.dronePos
         nx, ny = x, y
 
+        #move up
         if move == 0 and x > 0:
             nx -=1
+        #move down
         elif move == 1 and x < self.rows - 1:
             nx += 1
+        #move left
         elif move == 2 and y > 0:
             ny -= 1
+        #move right
         elif move == 3 and y < self.columns - 1:
             ny += 1
         else :
             nx, ny = x,y
 
-        
+        #calculate distance improvement
         oldDist = abs(x - self.dropOff[0]) + abs(y-self.dropOff[1])
         newDist = abs(nx - self.dropOff[0]) + abs(ny-self.dropOff[1])
 
+        #update position
         self.dronePos = (nx, ny)
 
+        #penalties for improved results
         reward = float(self.price[nx][ny]) * 0.01
-
         reward -= 0.01
 
         reward += (oldDist - newDist) * 0.5
 
         terminated = False
 
+        #delivery complete and reward
         if (nx, ny) == self.dropOff:
             reward += 75
             terminated = True
@@ -122,6 +139,7 @@ class villageEnviroment(gym.Env):
 
         return obs, reward, terminated, False, {}
     
+    #build obervation grid
     def getObs(self):
         obs = np.copy(self.village)
         obs[self.dronePos[0], self.dronePos[1]] = 9

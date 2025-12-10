@@ -1,14 +1,17 @@
+#imports
 import torch
 import torch.nn as nn
 import torch.nn.functional as nnf
 
-
+#plociy network for reinforced learning
 class PolicyModel(nn.Module):
     def __init__(self, inputDim, hiddenDim, outputDim, dropout):
         super().__init__()
+        #set up parameters
         kernelSize = 3
         padding = 1
 
+        #feature extraction
         self.convol = nn.Sequential(
             nn.Conv2d(1, 16, kernelSize, padding=padding),
             nn.ReLU(),
@@ -17,6 +20,7 @@ class PolicyModel(nn.Module):
             nn.Flatten()
         )
 
+        #fully connected layers
         self.nnfc1 = nn.LazyLinear(hiddenDim)
         self.nnfc2 = nn.Linear(hiddenDim, outputDim)
 

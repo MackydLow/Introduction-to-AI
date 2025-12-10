@@ -96,20 +96,12 @@ def calculateLoss(stepwiseReturns, logProbActions, entrop):
     entropLoss = - ENTROPY_COEF * entrop.sum()
     return policyLoss + entropLoss
 
-def updatePolicy(policy, stepwiseReturns, logProbAction, optimizer):
-    stepwiseReturns = stepwiseReturns.detach()
-    loss = calculateLoss(stepwiseReturns, logProbAction, entrop)
-
-    optimizer.zero_grad()
-    loss.backward()
-    torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
-    optimizer.step()
-
-    return loss.item()
-
 def main():
 
+    #start training
     print("Starting Training")
+
+    #get locations and enviroment set
     deliveryLocation = houseDelivery()
     price = createPriceArray(village)
     env = villageEnviroment(village, price, deliveryLocation = deliveryLocation)
@@ -117,13 +109,16 @@ def main():
     inputDim = int(np.prod(env.observation_space.shape))
     outputDim = env.actionSpace.n
 
+    #set up policy
     policy = PolicyModel(inputDim, HIDDEN_DIM, outputDim, DROPOUT)
     optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
 
-    batchEpisode = 30
+    #set episdoes 
+    batchEpisodes = 40
 
     episode_returns = []
 
+    #start training loop
     for episode in range(1, MAX_EPOCHS + 1):
 
         allReturns = []
@@ -131,7 +126,7 @@ def main():
         batchReward = []
         allEntrop = []
 
-        for _ in range(batchEpisode):
+        for _ in range(batchEpisodes):
             episodeReturn, stepwiseReturns, logProbActions, entrop = forwardPass(env, policy, DISCOUNT_FACTOR)
             allReturns.append(stepwiseReturns)
             allLogProbs.append(logProbActions)
@@ -139,30 +134,39 @@ def main():
             allEntrop.append(entrop)
             episode_returns.append(episodeReturn)
 
+        #reinforce loss
         allReturns = torch.cat(allReturns)
         allLogProbs = torch.cat(allLogProbs)
         allEntrop = torch.cat(allEntrop)
 
+        #reduce variance
         baseline = allReturns.mean()
+
+        #policy gradient 
         adv = allReturns - baseline
         adv = (adv - adv.mean()) /  (adv.std() + 1e-8)
 
-        Ploss = -(adv.detach() * allLogProbs).sum()
+        #calulcate loss
+        Ploss = -(adv * allLogProbs).sum()
         entropLoss = -ENTROPY_COEF * allEntrop.sum()
 
         loss = Ploss + entropLoss
 
+        #optimization
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
         optimizer.step()
 
-        lr = max(LEARNING_RATE * (0.995 ** episode), 1e-3)
+        #set learning rate decay
+        lr = LEARNING_RATE * (0.995 ** episode)
+        lr = max(lr, 1e-5)
         optimizer.param_groups[0]["lr"] = lr
 
         mean20 = np.mean(episode_returns[-N_TRIALS:])
         avgBatch = np.mean(batchReward)
 
+        #print progress
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
                   f"Mean {N_TRIALS}: {mean20:6.2f} | " 
@@ -173,8 +177,8 @@ def main():
             print("reached threshold")
             break
             
-    torch.save(policy.state_dict(), "drone_policy_entropy.pt")
-    print("done saved")
+    torch.save(policy.state_dict(), "drone_policy.pt")
+    print("saved -> drone_policy.pt")
 
 if __name__ == "__main__":
     main()
