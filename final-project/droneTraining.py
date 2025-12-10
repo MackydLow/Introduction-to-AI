@@ -110,7 +110,7 @@ def main():
     policy = PolicyModel(inputDim, HIDDEN_DIM, outputDim, DROPOUT)
     optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
 
-    batchEpisode = 50
+    batchEpisode = 20
 
     episode_returns = []
 
