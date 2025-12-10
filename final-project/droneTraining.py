@@ -114,7 +114,7 @@ def main():
     optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
 
     #set episdoes 
-    batchEpisodes = 40
+    batchEpisodes = 30
 
     episodeReturns = []
 
