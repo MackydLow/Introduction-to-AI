@@ -118,19 +118,22 @@ def main():
 
         allReturns = []
         allLogProbs = []
+        batchReward = []
 
         for _ in range(batchEpisode):
             episodeReturn, stepwiseReturns, logProbActions, entrop = forwardPass(env, policy, DISCOUNT_FACTOR)
             allReturns.append(stepwiseReturns)
             allLogProbs.append(logProbActions)
+            batchReward.append(episodeReturn)
             episode_returns.append(episodeReturn)
 
         allReturns = torch.cat(allReturns)
         allLogProbs = torch.cat(allLogProbs)
 
-        allReturns = (allReturns - allReturns.mean()) / (allReturns.std() + 1e-6)
+        baseline = allReturns.mean()
+        adv = allReturns - baseline
 
-        loss = -(allReturns * allLogProbs).sum() 
+        loss = -(adv.detach() * allLogProbs).sum()
 
         optimizer.zero_grad()
         loss.backward()
@@ -141,14 +144,16 @@ def main():
         optimizer.param_groups[0]["lr"] = lr
 
         mean20 = np.mean(episode_returns[-N_TRIALS:])
+        avgBatch = np.mean(batchReward)
 
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
                   f"Mean {N_TRIALS}: {mean20::6.2f} | " 
-                  f"Return: {episodeReturn:6.2f} | "
+                  f"Return: {batchReward:6.2f} | "
                   f"LR: {lr:.6f}")
             
         if mean20 >= REWARD_THRESHOLD:
+            print("reached threshold")
             break
             
     torch.save(policy.state_dict(), "drone_policy_entropy.pt")
