@@ -110,12 +110,6 @@ def main():
     policy = PolicyModel(inputDim, HIDDEN_DIM, outputDim, DROPOUT)
     optimizer = opt.Adam(policy.parameters(), lr = LEARNING_RATE)
 
-    sched = torch.optim.lr_scheduler.StepLR(
-        optimizer,
-        step_size = 300,
-        gamma = 0.5
-    )
-
     batchEpisode = 20
 
     episode_returns = []
@@ -134,30 +128,28 @@ def main():
         allReturns = torch.cat(allReturns)
         allLogProbs = torch.cat(allLogProbs)
 
-        allReturns = (allReturns - allReturns.mean()) / (allReturns.std() + 1e-3)
+        allReturns = (allReturns - allReturns.mean()) / (allReturns.std() + 1e-6)
 
-        baseline = allReturns.mean()
-        advant = allReturns - baseline
-
-        loss = -(advant * allLogProbs).sum()
+        loss = -(allReturns * allLogProbs).sum() 
 
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
         optimizer.step()
 
-        lr = max(LEARNING_RATE * (0.99 ** episode), 1e-3)
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
+        lr = max(LEARNING_RATE * (0.995 ** episode), 1e-3)
+        optimizer.param_groups[0]["lr"] = lr
 
-        episode_returns.append(episodeReturn)
-        avgReturn = np.mean(episode_returns[-20:])
+        mean20 = np.mean(episode_returns[-N_TRIALS:])
 
         if episode % PRINT_INTERVAL == 0:
             print(f"| Episode {episode:4} | "
-                  f"Mean 20: {avgReturn:6.2f} | " 
+                  f"Mean {N_TRIALS}: {mean20::6.2f} | " 
                   f"Return: {episodeReturn:6.2f} | "
-                  f"LR: {optimizer.param_groups[0]['lr']:.6f}")
+                  f"LR: {lr:.6f}")
+            
+        if mean20 >= REWARD_THRESHOLD:
+            break
             
     torch.save(policy.state_dict(), "drone_policy_entropy.pt")
     print("done saved")
