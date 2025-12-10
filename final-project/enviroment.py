@@ -80,7 +80,7 @@ class villageEnviroment(gym.Env):
             dtype=np.float32
         )
         #initiliase drone and drop off
-        self.droneLoc = None
+        self.dronePos = None
         self.dropOff = deliveryLocation 
         self.dropOff = (deliveryLocation[0], deliveryLocation[1])
         self.reset()
@@ -91,13 +91,13 @@ class villageEnviroment(gym.Env):
 
         #find pickup area
         deliveryPickup = np.argwhere(self.village == 5)
-        self.droneloc = tuple(deliveryPickup[0])
+        self.dronePos = tuple(deliveryPickup[0])
 
         return self.getObs(), {}
     
     #move the drone
     def step(self, move):
-        x, y = self.droneLoc
+        x, y = self.dronePos
         nx, ny = x, y
 
         #move up
@@ -120,7 +120,7 @@ class villageEnviroment(gym.Env):
         newDistance = abs(nx - self.dropOff[0]) + abs(ny-self.dropOff[1])
 
         #update position
-        self.droneLoc = (nx, ny)
+        self.dronePos = (nx, ny)
 
         #penalties for improved results
         reward = float(self.price[nx][ny]) * 0.01
@@ -142,7 +142,7 @@ class villageEnviroment(gym.Env):
     #build obervation grid
     def getObs(self):
         obs = np.copy(self.village)
-        obs[self.droneLoc[0], self.droneLoc[1]] = 9
+        obs[self.dronePos[0], self.dronePos[1]] = 9
         return (obs[:, :, None].astype(np.float32)) / 4
     
     def print(self):
