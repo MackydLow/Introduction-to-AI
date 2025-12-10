@@ -116,22 +116,39 @@ def main():
         gamma = 0.5
     )
 
+    batchEpisode = 20
+
     episode_returns = []
 
     for episode in range(1, MAX_EPOCHS + 1):
-        episodeReturn, stepwiseReturns, logProbActions, entrop = forwardPass(env, policy, DISCOUNT_FACTOR)
-        loss = calculateLoss(stepwiseReturns, logProbActions, entrop)
 
-        lr = LEARNING_RATE * (0.99 ** episode)
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
+        allReturns = []
+        allLogProbs = []
+
+        for _ in range(batchEpisode):
+            episodeReturn, stepwiseReturns, logProbActions, entrop = forwardPass(env, policy, DISCOUNT_FACTOR)
+            allReturns.append(stepwiseReturns)
+            allLogProbs.append(logProbActions)
+            episode_returns.append(episodeReturn)
+
+        allReturns = torch.cat(allReturns)
+        allLogProbs = torch.cat(allLogProbs)
+
+        allReturns = (allReturns - allReturns.mean()) / (allReturns.std() + 1e-3)
+
+        baseline = allReturns.mean()
+        advant = allReturns - baseline
+
+        loss = -(advant * allLogProbs).sum()
 
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(policy.parameters(), 1.0)
         optimizer.step()
 
-        sched.step()
+        lr = max(LEARNING_RATE * (0.99 ** episode), 1e-3)
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
 
         episode_returns.append(episodeReturn)
         avgReturn = np.mean(episode_returns[-20:])
